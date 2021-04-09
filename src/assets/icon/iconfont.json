@@ -1,0 +1,16 @@
+{
+  "id": "2463043",
+  "name": "apartment",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "6616553",
+      "name": "头像",
+      "font_class": "touxiang",
+      "unicode": "e676",
+      "unicode_decimal": 58998
+    }
+  ]
+}

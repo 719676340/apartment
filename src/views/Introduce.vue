@@ -1,5 +1,5 @@
 <template>
-  <div class=''>
+  <div class='introduce'>
     introduce
   </div>
 </template>
@@ -10,4 +10,9 @@ export default {
 }
 </script>
 <style>
+.introduce{
+  width: 100vh;
+  height: 100%;
+  background-color:yellow
+}
 </style>
