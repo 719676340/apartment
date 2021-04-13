@@ -29,7 +29,6 @@
               <el-menu-item index="/admin/apartmentout">学生退宿</el-menu-item>
               <el-menu-item index="/admin/apartmentin">学生入住</el-menu-item>
               <el-menu-item index="/admin/apartmentquery">宿舍分配查询</el-menu-item>
-              <el-menu-item index="/admin/apartmentallocation">宿舍分配</el-menu-item>
               <el-menu-item index="/admin/fixinfo">维修信息查看</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
@@ -118,7 +117,7 @@ export default {
   setup() {
     const state=reactive({
       showmain:true,
-      showtype:true,
+      showtype:false,
       defaultOpen:['1','2','3','4'],
       currentPath:'/'
 

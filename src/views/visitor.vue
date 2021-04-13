@@ -32,8 +32,9 @@
 </template>
 
 <script>
-import { reactive, toRefs ,ref} from 'vue'
+import {reactive, toRefs ,ref} from 'vue'
 import addvisitor from '../components/addvisitor'
+// import {useRoute} from 'vue-router'
 export default {
   name: 'visitor',
   components:{
@@ -64,6 +65,7 @@ export default {
             address: '上海市普陀区金沙江路 1516 弄'
           }]
       })
+    //   const route=useRoute()
       const sayhi=function(){
           console.log('hello')
       }

@@ -13,7 +13,8 @@
 </template>
 
 <script>
-import { reactive, toRefs } from 'vue'
+import {reactive, toRefs } from 'vue'
+import {useRouter} from 'vue-router'
 export default {
   name: 'Header',
   setup(){
@@ -21,8 +22,43 @@ export default {
         name:'标题',
         userinfo:'名字测试'
     })
+    const router=useRouter()
+    const pathmap=[
+        {
+            visitor:'访客信息登记',
+            apartmentchange:'宿舍调整',
+            apartmentout:'学生退宿',
+            apartmentin:'学生入住',
+            apartmentquery:'宿舍分配查询',
+            apartmentallocation:'宿舍分配',
+            fixinfo:'维修信息查看',
+            apartmentinfo:'住宿情况查询',
+            stuinfo:'学生信息查询',
+            money:'缴费'
+        },
+        {
+            fixinfo:'维修登记',
+            apartmentout:'退宿申请',
+            apartmentin:'入住登记',
+            apartmentchoose:'宿舍选择',
+            apartmentadjust:'调换宿舍申请',
+            stuinfo:'信息补全',
+            myinfo:'信息查询',
+            money:'缴费'
+        }
+    ]
+    router.afterEach((to)=>{
+        let path=to.fullPath.split('/')
+        if(path[1]=='admin'){
+            state.name=pathmap[0][path[2]]
+        }else{
+            state.name=pathmap[1][path[2]]
+        }
+        console.log(state.name)
+    })
     return {
-        ...toRefs(state)
+        ...toRefs(state),
+        pathmap
     }
   }
 }
