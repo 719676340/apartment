@@ -96,7 +96,6 @@
       <el-container class="maincontainer">
         <el-main class="maincontent">
           <Header class="container-header"></Header>
-          Main
           <router-view />
         </el-main>
       </el-container>
@@ -117,7 +116,7 @@ export default {
   setup() {
     const state=reactive({
       showmain:true,
-      showtype:false,
+      showtype:true,
       defaultOpen:['1','2','3','4'],
       currentPath:'/'
 

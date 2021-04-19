@@ -3,34 +3,34 @@
         <el-form :inline="true" class="form">
             <el-form-item label="房间号">
                 <el-cascader
-                    v-model="infoarr"
+                    v-model="info"
                     :options="options"
                 >
                 </el-cascader>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary"><span class="bottonword">提交</span></el-button>
+                <el-button type="primary" @click="getstu"><span class="bottonword">提交</span></el-button>
             </el-form-item>
         </el-form>
-        <el-table :data="result" style="width: 100%">
-            <el-table-column prop="date" label="时间"></el-table-column>
-            <el-table-column prop="name" label="名字"></el-table-column>
-            <el-table-column prop="address" label="地址"></el-table-column>
+        <el-table :data="infoarr" style="width: 100%">
+            <el-table-column prop="stuid" label="学号"></el-table-column>
+            <el-table-column prop="name" label="姓名"></el-table-column>
+            <el-table-column prop="sex" label="性别"></el-table-column>
+            <el-table-column prop="college" label="学院"></el-table-column>
+            <el-table-column prop="major" label="专业"></el-table-column>
         </el-table>
     </el-card>
 </template>
 
 <script>
 import { reactive, toRefs } from 'vue'
+import axios from '../utils/axios'
+// import { ElMessage } from 'element-plus'
 export default {
   name: 'apartmentinfo',
   setup(){
       const state=reactive({
-          info:{
-            buildnum:'',
-            floornum:'',
-            roomnum:''
-          },
+          info:[],
           infoarr:[],
           options:[{
               value:'1',
@@ -136,9 +136,21 @@ export default {
             address: '上海市普陀区金沙江路 1518 弄'
           }
       ])
+      const getstu=function(){
+          axios.post('/admin/getroommate',{
+            buildnum:state.info[0],
+            floornum:state.info[1],
+            roomnum:state.info[2]
+          }).then((res)=>{
+              console.log(1)
+              console.log(res.data)
+              state.infoarr=res.data.data
+          })
+      }
       return{
           ...toRefs(state),
-          result
+          result,
+          getstu
       }
   }
 }

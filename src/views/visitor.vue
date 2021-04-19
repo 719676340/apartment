@@ -9,16 +9,17 @@
         </template>
         <div class="contenttable">
             <el-table :data="tableData" style="width: 100%">
-                <el-table-column prop="date" label="时间"></el-table-column>
                 <el-table-column prop="name" label="名字"></el-table-column>
-                <el-table-column prop="address" label="地址"></el-table-column>
+                <el-table-column prop="idcard" label="身份证号"></el-table-column>
+                <el-table-column prop="content" label="内容"></el-table-column>
+                <el-table-column prop="time" label="访问时间" :formatter="formattime"></el-table-column>
                 <!-- <el-table-column prop="date" label="时间"></el-table-column> -->
                 <el-table-column fixed="right" label="操作" width="120">
-                    <template #default>
+                    <template #default="scope">
                       <el-button
                         type="danger"   
                         size="small"
-                        @click="sayhi"
+                        @click="delguest(scope.row.uid)"
                         >
                         <span class="bottonword">移除</span>
                       </el-button>
@@ -28,13 +29,15 @@
             </el-table>
         </div>
     </el-card>
-    <addvisitor ref="add"></addvisitor>
+    <addvisitor ref="add" :reload="getvisior"></addvisitor>
 </template>
 
 <script>
-import {reactive, toRefs ,ref} from 'vue'
+import {reactive, toRefs ,ref, onMounted} from 'vue'
 import addvisitor from '../components/addvisitor'
+import dayjs from 'dayjs'
 // import {useRoute} from 'vue-router'
+import axios from '../utils/axios'
 export default {
   name: 'visitor',
   components:{
@@ -43,40 +46,41 @@ export default {
   setup(){
       const add=ref(null)
       const state=reactive({
-        tableData: [{
-            date: '2016-05-02',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1518 弄'
-          }, {
-            date: '2016-05-04',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1517 弄'
-          }, {
-            date: '2016-05-01',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1519 弄'
-          }, {
-            date: '2016-05-03',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1516 弄'
-          }, {
-            date: '2016-05-03',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1516 弄'
-          }]
+        tableData: []
       })
-    //   const route=useRoute()
-      const sayhi=function(){
-          console.log('hello')
+      const formattime=function(row){
+        return row.time=dayjs(row.time).format('YYYY-MM-DD HH:mm:ss')
+      }
+      const delguest=function(id){
+        axios.post('/admin/delguest',{
+          uid:id
+        }).then((res)=>{
+          console.log(res)
+          getvisior()
+        })
+      }
+      const sayhi=function(res){
+          console.log(res.uid)
       }
       const addvisitor=function(){
           add.value.open()
       }
+      const getvisior=()=>{
+        axios.get('/admin/getguest').then((res)=>{
+          state.tableData=res.data
+        })
+      }
+      onMounted(()=>{
+        getvisior()
+      })
       return {
           ...toRefs(state),
           add,
           sayhi,
-          addvisitor
+          addvisitor,
+          getvisior,
+          formattime,
+          delguest
       }
   }
 }

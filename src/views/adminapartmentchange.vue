@@ -8,21 +8,24 @@
                 <el-form-item label="姓名" prop="name" class="infoname">
                     <el-input  v-model="form.name"></el-input>
                 </el-form-item>
-                <el-button type="primary" class="infobotton"><span class="bottonword">检验</span></el-button>
+                <el-button type="primary" class="infobotton" @click="checkstu"><span class="bottonword">检验</span></el-button>
             </div>
             <div class="room">
                 <el-form-item label="调换房间" prop="room" class="room">
-                      <el-cascader v-model="form.room" :options="options" @change="handleChange"></el-cascader>
+                      <el-cascader v-model="form.room" :options="options"></el-cascader>
                 </el-form-item>
-                <el-button type="primary" class="roombotton"><span class="bottonword">检验</span></el-button>
+                <el-button type="primary" class="roombotton" @click="checkroom"><span class="bottonword">检验</span></el-button>
             </div>
-            <el-button type="primary" class="formbotton"><span class="bottonword">确 定</span></el-button>
+            <el-button type="primary" class="formbotton" @click="submit"><span class="bottonword">确 定</span></el-button>
       </el-form>
   </el-card>
 </template>
 
 <script>
 import { reactive, toRefs } from 'vue'
+import axios from '../utils/axios'
+import { ElMessage } from 'element-plus'
+
 export default {
   name: 'apartmentchange',
   setup(){
@@ -30,7 +33,11 @@ export default {
           form:{
               id:'',
               name:'',
-              room:''
+              room:[],
+              preapartmentid:'',
+              preapartmentnum:0,
+              nowapartmentid:'',
+              nowapartmentnum:0
           },
           options:[{
               value:'1',
@@ -129,8 +136,88 @@ export default {
               ]
           }]
       })
+      const checkstu=function(){
+          axios.post('/admin/checkstu',{
+              stuid:state.form.id
+          }).then((res)=>{
+              if(res.data.data[0].name!=state.form.name){
+                  ElMessage.warning({
+                      message:'姓名或学号错误'
+                  })
+              }else{
+                    ElMessage.success({
+                      message:'检验正确'
+                  })
+              }
+          }).catch((err)=>{
+              console.log(err)
+          })
+      }
+      const checkroom=function(){
+          let [buildnum,floornum,roomnum]=[state.form.room[0],state.form.room[1],state.form.room[2]]
+          axios.post('/admin/getapartmentpeoplenum',{buildnum,floornum,roomnum}).then((res)=>{
+              console.log(res.data.data[0].peoplenum)
+              if(res.data.data[0].peoplenum>=4){
+                ElMessage.warning({
+                    message:'该宿舍已经满员'
+                })
+              }else{
+                    ElMessage.success({
+                      message:'检验正确'
+                  })                 
+              }
+          })
+      }
+      const submit=async function(){
+          let [stuid,buildnum,floornum,roomnum]=[state.form.id,state.form.room[0],state.form.room[1],state.form.room[2]]
+          await axios.post('/admin/checkstu',{
+              stuid:stuid
+          }).then((res)=>{
+              state.form.preapartmentid=res.data.data[0].apartmentid
+          }).then(()=>{
+              return axios.post('/admin/getapartmentpeoplenum',{
+                  buildnum,floornum,roomnum
+              })
+          }).then((res)=>{
+              state.form.nowapartmentid=res.data.data[0].apartmentid
+              state.form.nowapartmentnum=res.data.data[0].peoplenum
+          }).then(()=>{
+              return axios.post('/admin/getapartment',{
+                  apartmentid:state.form.preapartmentid
+              })
+          }).then((res)=>{
+              state.form.preapartmentnum=res.data.data[0].peoplenum
+          }).then(()=>{
+              return Promise.all([
+              axios.post('/admin/updateapartmentstu',{
+                  apartmentid:state.form.nowapartmentid,
+                  stuid:state.form.id
+              }),
+              axios.post('/admin/updateapartmentpeoplenumbyid',{
+                  apartmentid:state.form.nowapartmentid,
+                  num:state.form.nowapartmentnum+1
+              }),
+              axios.post('/admin/updateapartmentpeoplenumbyid',{
+                  apartmentid:state.form.preapartmentid,
+                  num:state.form.preapartmentnum-1  
+              })
+                ])
+          }).then(()=>{
+                ElMessage.success({
+                      message:'调整成功'
+                })
+          }).catch(()=>{
+                ElMessage.warning({
+                      message:'调整失败'
+                })
+          })
+      }
+
       return {
-          ...toRefs(state)
+          ...toRefs(state),
+          checkstu,
+          checkroom,
+          submit
       }
   }
 }

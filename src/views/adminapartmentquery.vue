@@ -5,13 +5,14 @@
                 <el-input  v-model="info.id"></el-input>
             </el-form-item>
             <el-form-item>
-                 <el-button type="primary"><span class="bottonword">提交</span></el-button>
+                 <el-button type="primary" @click="getapartmentbystuid"><span class="bottonword">提交</span></el-button>
             </el-form-item>
         </el-form>
         <el-table :data="result" style="width: 100%">
-            <el-table-column prop="date" label="时间"></el-table-column>
-            <el-table-column prop="name" label="名字"></el-table-column>
-            <el-table-column prop="address" label="地址"></el-table-column>
+            <el-table-column prop="buildnum" label="楼号"></el-table-column>
+            <el-table-column prop="floornum" label="层数"></el-table-column>
+            <el-table-column prop="roomnum" label="房间号"></el-table-column>
+            <el-table-column prop="peoplenum" label="人数"></el-table-column>
         </el-table>
         <el-divider content-position="center">分割线</el-divider>
         <el-card>
@@ -21,42 +22,59 @@
               </div>
             </template>
             <el-table :data="allroom" style="width: 100%">
-                <el-table-column prop="date" label="时间"></el-table-column>
-                <el-table-column prop="name" label="名字"></el-table-column>
-                <el-table-column prop="address" label="地址"></el-table-column>
+                <el-table-column prop="buildnum" label="楼号"></el-table-column>
+                <el-table-column prop="floornum" label="层数"></el-table-column>
+                <el-table-column prop="roomnum" label="房间号"></el-table-column>
+                <el-table-column prop="peoplenum" label="人数"></el-table-column>
             </el-table>
+            <el-pagination
+                layout="prev, pager, next"
+                :total="50">
+            </el-pagination>
         </el-card>
     </el-card>
 </template>
 
 <script>
-import { reactive, toRefs } from 'vue'
+import { reactive, toRefs,onMounted } from 'vue'
+import axios from '../utils/axios'
+// import { ElMessage } from 'element-plus'
 export default {
   name: '',
   setup(){
       const state=reactive({
           info:{
               id:''
-          }
+          },
+          result:[],
+          allroom:[]
       })
-      const result=reactive([
-          {
-            date: '2016-05-02',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1518 弄'
-          }
-      ])
-      const allroom=reactive([
-          {
-            date: '2016-05-02',
-            name: '王小虎',
-            address: '上海市普陀区金沙江路 1518 弄'
-          }
-      ])
+      onMounted(()=>{
+        getallapartment()
+      })
+      const getallapartment=function(){
+          axios.get('/admin/getallapartment').then((res)=>{
+              state.allroom=res.data.data
+          })
+      }
+      const getapartmentbystuid=function(){
+          axios.post('/admin/checkstu',{
+              stuid:state.info.id
+          }).then((res)=>{
+              console.log(res.data.data[0].apartmentid)
+              return res.data.data[0].apartmentid
+          }).then((apartmentid)=>{
+              return axios.post('/admin/checkapartmentbyid',{
+                  apartmentid
+              })
+          }).then((res)=>{
+              state.result=res.data.data
+          })
+      }
       return {
           ...toRefs(state),
-          result,
-          allroom
+          getallapartment,
+          getapartmentbystuid
       }
   }
 }
