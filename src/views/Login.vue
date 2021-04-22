@@ -4,15 +4,19 @@
           <div class="title">
               <span class="word">宿舍信息管理系统</span>
           </div>
-          <el-form class="loginform" :model="ruleForm" :rules="rules" ref="loginform" label-position="left" >
+          <el-form class="loginform" :model="info" :rules="rules" ref="loginform" label-position="left" >
               <el-form-item label="账号" class="loginformitem" prop="username">
-                  <el-input type="text" v-model="ruleForm.username" placeholder="请输入内容"></el-input>
+                  <el-input type="text" v-model="info.username" placeholder="请输入内容"></el-input>
               </el-form-item>
-              <el-form-item label="密码" class="loginformitem" prop="password">
-                  <el-input type="password" v-model="ruleForm.password" placeholder="请输入内容"></el-input>
+              <el-form-item label="密码" class="loginformitem" prop="password"> 
+                  <el-input type="password" v-model="info.password" placeholder="请输入内容"></el-input>
+              </el-form-item>
+              <el-form-item  class="loginformitem">
+                    <el-radio v-model="info.type" label="1">学生</el-radio>
+                    <el-radio v-model="info.type" label="0">管理员</el-radio>
               </el-form-item>
               <el-form-item class="loginformitem">
-                  <el-button type="primary" @click="submitForm">提交</el-button>
+                  <el-button type="primary" @click="submitForm"><span class="wordcolor">提交</span></el-button>
               </el-form-item>
           </el-form>
       </div>
@@ -23,9 +27,13 @@
 import { reactive, ref, toRefs } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import axios from '../utils/axios'
+import {localSet} from '../utils/index'
+import { useStore } from 'vuex'
 export default {
   name: 'login',
   setup(){ 
+    const store=new useStore()
     const router=new useRouter()
     const loginform=ref(null)
     // 不知道为什么可以不用加status
@@ -45,10 +53,12 @@ export default {
             callback()
         }
     }
-    const status=reactive({
-        ruleForm:{
+    const state=reactive({
+        info:{
             username:'',
-            password:''
+            password:'',
+            type:''
+
         },
         rules:{
             username:[
@@ -62,8 +72,50 @@ export default {
     const submitForm = async ()=>{
         loginform.value.validate((valid)=>{
             if(valid){
-                console.log(valid)
-                router.push({path:'/introduce'})
+                axios.post('/login',{
+                    id:state.info.username,
+                    password:state.info.password,
+                    type:state.info.type
+                }).then((res)=>{
+                    if(res.data.code==500){
+                        ElMessage.error({
+                            message:'账号或密码错误'
+                        })
+                        throw(new Error('账号或密码错误'))
+                    }else if(res.data.code==200){
+                        ElMessage.success({
+                            message:'登入成功' 
+                        })
+                        localSet('token', res.data.data.token)
+                        store.dispatch('changeId',state.info.username)
+                        store.dispatch('changeType',state.info.type)
+                        if(state.info.type==0){
+                            router.push({path:'/admin/'})
+                        }else{
+                            router.push({path:'/stu/'})
+                        }
+                        return {
+                            flag:true,
+                            id:state.info.username,
+                            type:state.info.type
+                        }
+                    }else{
+                        ElMessage.error({
+                            message:'未知错误'
+                        })
+                        throw(new Error('未知错误'))
+                    }
+                }).then((data)=>{
+                    if(data.flag){
+                        axios.post('/logintablein',{
+                            id:data.id,
+                            type:data.type
+                        })
+                    }
+                }).catch((err)=>{
+                    console.log(22222222)
+                    console.log(err)
+                })
             }else{      
                 ElMessage('密码或账号不能为空') 
             }   
@@ -71,7 +123,7 @@ export default {
     }
     return {
         //保持
-        ...toRefs(status),
+        ...toRefs(state),
         submitForm,
         loginform,
     }
@@ -88,7 +140,7 @@ export default {
 .login-content{
     position: relative;
     width: 420px;
-    height: 500px;
+    height: 550px;
     margin: auto;
     box-shadow: 0px 2px 10px rgb(0 0 0/15%);
 }
@@ -114,5 +166,8 @@ export default {
 .loginformitem{
     display: block;
     margin-bottom: 40px;
+}
+.wordcolor{
+    color: #fff;
 }
 </style>

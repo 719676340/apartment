@@ -105,8 +105,10 @@
 </template>
 
 <script>
-import { reactive } from 'vue'
+import { reactive, toRefs } from 'vue'
 import Header from './components/Header'
+import { useRouter } from 'vue-router'
+// import { useRoute } from 'vue-router'
 
 export default {
   name: 'App',
@@ -115,13 +117,29 @@ export default {
   },
   setup() {
     const state=reactive({
-      showmain:true,
       showtype:true,
+      showmain:true,
       defaultOpen:['1','2','3','4'],
       currentPath:'/'
-
     })
-    return state
+    const router = useRouter()
+    // const route= useRoute()
+    router.beforeEach((to)=>{
+      let path=to.fullPath.split('/')
+      if(path[1]=='admin'||path[1]=='stu'){
+        state.showmain=true
+        if(path[1]=='admin'){
+          state.showtype=true
+        }else{
+          state.showtype=false
+        }
+      }else{
+        state.showmain=false
+      }
+    })
+    return {
+      ...toRefs(state)
+    }
   }
 }
 </script>

@@ -16,26 +16,66 @@
             </el-input>
         </el-form-item>
         <el-form-item>
-            <el-button type="primary"><span class="bottonword">确 定</span></el-button>
+            <el-button type="primary" @click="submit"><span class="bottonword">确 定</span></el-button>
         </el-form-item>
       </el-form>
   </el-card>
 </template>
 
 <script>
-import { reactive, toRefs } from 'vue'
+import { onMounted, reactive, toRefs } from 'vue'
+import axios from '../utils/axios';
+import { ElMessage } from 'element-plus'
 export default {
   name: 'fixinfo',
   setup(){
       const state=reactive({
           content:{
-              apartmentid:'1111',
-              stuid:'11111',
+              apartmentid:'',
+              stuid:'',
               content:'',
           }
       })
+      const getinfo=async function(){
+        await axios.get('/getlogintable').then((res)=>{
+            return res.data.data[res.data.data.length-1].id
+        }).then((id)=>{
+            axios.post('/stu/getstuinfo',{
+                id
+            }).then((res)=>{
+                state.content.apartmentid=res.data.data[res.data.data.length-1].apartmentid
+                state.content.stuid=res.data.data[res.data.data.length-1].stuid
+            })
+        })
+      }
+      const submit=function(){
+          axios.post('/admin/getapartment',{
+              apartmentid:state.content.apartmentid
+          }).then((res)=>{
+              let buildnum=res.data.data[res.data.data.length-1].buildnum
+              let floornum=res.data.data[res.data.data.length-1].floornum
+              let roomnum=res.data.data[res.data.data.length-1].roomnum
+              axios.post('/stu/insertfix',{
+                  content:state.content.content,
+                  stuid:state.content.stuid,
+                  buildnum,
+                  floornum,
+                  roomnum
+              }).then(()=>{
+                  ElMessage.success('提交成功')
+                  state.content.content=''
+              }).catch(()=>{
+                  ElMessage.warning('提交失败')
+              })
+          })
+      }
+      onMounted(()=>{
+        getinfo()
+      })
       return {
-          ...toRefs(state)
+          ...toRefs(state),
+          getinfo,
+          submit
       }
   }
 }

@@ -4,20 +4,33 @@
           {{name}}
       </div>
       <div class="head-right">
-          <div class="info">
-              <span><i class="iconfont  icon-touxiang"></i></span>
-              <span class="infoname">{{userinfo}}</span>
-          </div>
+          <el-popover placement='bottom' :width="160">
+                <p>用户退出</p>
+                <div style="text-align: right; margin: 0">
+                  <el-button type="primary" size="mini" @click="logout"><span class="wordcolor">确定</span></el-button>
+                </div>              
+              <template #reference>
+                <div class="info">
+                    <span><i class="iconfont  icon-touxiang"></i></span>
+                    <span class="infoname">{{userinfo}}</span>
+                </div>
+              </template>
+          </el-popover>
       </div>
   </div>    
 </template>
 
 <script>
-import {reactive, toRefs } from 'vue'
+import {onMounted, reactive, toRefs } from 'vue'
 import {useRouter} from 'vue-router'
+import {localRemove} from '../utils/index'
+// import { useStore } from 'vuex'
+import axios from '../utils/axios'
+
 export default {
   name: 'Header',
   setup(){
+    // const store=new useStore()
     const state=reactive({
         name:'标题',
         userinfo:'名字测试'
@@ -47,6 +60,25 @@ export default {
             money:'缴费'
         }
     ]
+    const logout=async function(){
+        localRemove('token')
+        await axios.get('logintableout')
+        router.push({ path: '/login' })
+    }
+    const getname=async function(){
+        await axios.get('/getlogintable').then((res)=>{
+            if(res.data.data[0].type){
+                axios.post('/getusername',{
+                    id:res.data.data[0].id
+                }).then((res)=>{
+                    state.userinfo=res.data.data[0].name
+                })
+            }else{
+                state.userinfo=res.data.data[0].id
+            }
+        })
+
+    }
     router.afterEach((to)=>{
         let path=to.fullPath.split('/')
         if(path[1]=='admin'){
@@ -54,11 +86,15 @@ export default {
         }else{
             state.name=pathmap[1][path[2]]
         }
-        console.log(state.name)
+    })
+    onMounted(()=>{
+        getname()
     })
     return {
         ...toRefs(state),
-        pathmap
+        pathmap,
+        logout,
+        getname
     }
   }
 }
@@ -89,5 +125,8 @@ export default {
     height: 100px;
     font-size: 16px;
     line-height: 100px;
+}
+.wordcolor{
+    color: #fff;
 }
 </style>

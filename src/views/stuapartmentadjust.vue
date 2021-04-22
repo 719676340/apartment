@@ -7,19 +7,23 @@
             <el-form-item label="姓名" prop="name" >
                 <el-input  v-model="info.name" :disabled="true"></el-input>
             </el-form-item>
+            <el-form-item label="原宿舍" prop="name" >
+                <el-input  v-model="info.preroom" :disabled="true"></el-input>
+            </el-form-item>
             <el-form-item label="选择房间" prop="room" class="room">
-                <span>{{info.room}}</span>
                 <el-cascader v-model="info.room" :options="options" :disabled="change"></el-cascader>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary"><span class="bottonword">确 定</span></el-button>
+              <el-button type="primary" @click="submit"><span class="bottonword">确 定</span></el-button>
             </el-form-item>
         </el-form>
     </el-card>
 </template>
 
 <script>
-import { reactive, toRefs } from 'vue'
+import { onMounted, reactive, toRefs } from 'vue'
+import axios from '../utils/axios';
+import { ElMessage } from 'element-plus'
 export default {
   name: 'apartmentadjust',
   setup(){
@@ -27,7 +31,10 @@ export default {
           info:{
               id:'',
               name:'',
-              room:[]
+              room:[],
+              nowapartmentid:'',
+              preapartmentid:'',
+              preroom:[]
           },
             options:[{
               value:'1',
@@ -126,11 +133,53 @@ export default {
               ]
             }],
       })
+    const getinfo=async function(){
+      await axios.get('/getlogintable').then((res)=>{
+          return res.data.data[res.data.data.length-1].id
+      }).then((id)=>{
+          axios.post('/admin/getstubyid',{
+              stuid:id
+          }).then((res)=>{
+              state.info.name=res.data.data[0].name
+              state.info.id=res.data.data[0].stuid
+              state.info.preapartmentid=res.data.data[0].apartmentid
+              state.info.preroom=[res.data.data[0].buildnum,res.data.data[0].floornum,res.data.data[0].roomnum]
+          })
+      })
+    }
+    const submit=async function(){
+        let [buildnum,floornum,roomnum]=[state.info.room[0],state.info.room[1],state.info.room[2]]
+        await axios.post('/admin/getapartmentpeoplenum',{buildnum,floornum,roomnum}).then((res)=>{
+            if(res.data.data[0].peoplenum>=4){
+                ElMessage.warning('所选宿舍满员')
+                throw(new Error('宿舍满员'))
+            }else{
+                state.info.nowapartmentid=res.data.data[0].apartmentid
+                axios.post('/stu/insertchangetable',{
+                    id:state.info.id,
+                    preapartmentid:state.info.preapartmentid,
+                    nowapartmentid:state.info.nowapartmentid
+                }).then(()=>{
+                    ElMessage.success('提交成功')
+                }).catch(()=>{
+                    ElMessage.warning('提交失败')
+                })
+            }
+        })
+    }
+    onMounted(()=>{
+        getinfo()
+    })
       return {
-          ...toRefs(state)
+          ...toRefs(state),
+          getinfo,
+          submit
       }
   }
 }
 </script>
 <style>
+.bottonword{
+    color: #fff;
+}
 </style>

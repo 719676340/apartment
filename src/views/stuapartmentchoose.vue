@@ -12,7 +12,7 @@
           <el-cascader v-model="info.room" :options="options" :disabled="change"></el-cascader>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary"><span class="bottonword">确 定</span></el-button>
+        <el-button type="primary" :disabled="change" @click="submit"><span class="bottonword">确 定</span></el-button>
       </el-form-item>
 
     </el-form>
@@ -20,14 +20,17 @@
 </template>
 
 <script>
-import { reactive, toRefs } from 'vue'
+import { onMounted, reactive, toRefs } from 'vue'
+import axios from '../utils/axios';
+import { ElMessage } from 'element-plus'
+
 export default {
   name: 'apartmentchoose',
   setup(){
     const state=reactive({
       info:{
-        id:'1',
-        name:'1',
+        id:'',
+        name:'',
         room:[]
       },
       options:[{
@@ -128,8 +131,64 @@ export default {
       }],
       change:false
     })
+    const getinfo=async function(){
+      await axios.get('/getlogintable').then((res)=>{
+          return res.data.data[res.data.data.length-1].id
+      }).then((id)=>{
+          axios.post('/admin/getstubyid',{
+              stuid:id
+          }).then((res)=>{
+              state.info.name=res.data.data[0].name
+              state.info.id=res.data.data[0].stuid
+              state.info.room=[res.data.data[0].buildnum,res.data.data[0].floornum,res.data.data[0].roomnum]
+              if(state.info.room.length!=0 && state.info.room[0]&& state.info.room[1]&& state.info.room[2]){
+                state.change=true
+              }else{
+                state.change=false
+              }
+          })
+      })
+    }
+    const submit=async function(){
+      if(state.info.room.length!=3){
+        ElMessage.warning('未选择宿舍')
+      }else{
+        await axios.post('/admin/getapartmentpeoplenum',{
+          buildnum:state.info.room[0],
+          floornum:state.info.room[1],
+          roomnum:state.info.room[2]
+        }).then((res)=>{
+          let apartmentid=res.data.data[0].apartmentid
+          let peoplenum=res.data.data[0].peoplenum
+          if(peoplenum>=4){
+            ElMessage.warning('超过人数上限')
+            throw(new Error('超过人数上线'))
+          }else{
+            return axios.post('/admin/updateapartmentstu',{
+              apartmentid:apartmentid,
+              stuid:state.info.id
+            }).then(()=>{
+              axios.post('/admin/updateapartmentpeoplenumbyid',{
+                apartmentid,
+                num:peoplenum+1
+              })
+            })
+          }
+        }).then(()=>{
+          ElMessage.success('提交成功')
+          getinfo()
+        }).catch(()=>{
+          ElMessage.warning('提交失败')
+        })
+      }
+    }
+    onMounted(()=>{
+      getinfo()
+    })
     return{
-      ...toRefs(state)
+      ...toRefs(state),
+      getinfo,
+      submit
     }
   }
 }

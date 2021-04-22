@@ -41,6 +41,7 @@ export default {
       }
       const getallpay0=function(){
         axios.get('/admin/getallpay0').then((res)=>{
+          console.log(res.data)
           state.payresult=res.data.data
           state.bottonstate=['primary','primary','primary']
           state.bottonstate[2]='success'
